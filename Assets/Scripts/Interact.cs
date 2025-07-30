@@ -17,30 +17,15 @@ public class Interact : MonoBehaviour
     {
         if (objectInRange == null) return;
 
-        GameObject[] goals = GameObject.FindGameObjectsWithTag("Goal");
+        GameObject nearestGoal = FindNearestGoal(objectInRange.transform.position);
+        if (nearestGoal == null) return;
 
-        GameObject nearestGoal = null;
-        float shortestDistance = Mathf.Infinity;
-
-        foreach (GameObject goal in goals)
+        Rigidbody rb = objectInRange.GetComponent<Rigidbody>();
+        if (rb != null)
         {
-            float distance = Vector3.Distance(objectInRange.transform.position, goal.transform.position);
-            if (distance < shortestDistance)
-            {
-                shortestDistance = distance;
-                nearestGoal = goal;
-            }
-        }
-
-        if (nearestGoal != null)
-        {
-            Rigidbody rb = objectInRange.GetComponent<Rigidbody>();
-            if (rb != null)
-            {
-                Vector3 direction = (nearestGoal.transform.position - objectInRange.transform.position).normalized;
-                rb.AddForce(direction * kickForce);
-                StartCoroutine(cameraController.FollowBall(objectInRange));
-            }
+            Vector3 direction = (nearestGoal.transform.position - objectInRange.transform.position).normalized;
+            rb.AddForce(direction * kickForce);
+            StartCoroutine(cameraController.FollowBall(objectInRange));
         }
     }
 
@@ -61,32 +46,39 @@ public class Interact : MonoBehaviour
             }
         }
 
+        if (farthestBall == null) return;
+
+        GameObject nearestGoal = FindNearestGoal(farthestBall.transform.position);
+        if (nearestGoal == null) return;
+
+        Rigidbody rb = farthestBall.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            Vector3 direction = (nearestGoal.transform.position - farthestBall.transform.position).normalized;
+            rb.AddForce(direction * kickForce);
+            StartCoroutine(cameraController.FollowBall(farthestBall));
+        }
+    }
+
+    private GameObject FindNearestGoal(Vector3 fromPosition)
+    {
         GameObject[] goals = GameObject.FindGameObjectsWithTag("Goal");
-        if (goals.Length == 0) return;
+        if (goals.Length == 0) return null;
 
         GameObject nearestGoal = null;
-        float shortestGoalDistance = Mathf.Infinity;
+        float shortestDistance = Mathf.Infinity;
 
         foreach (GameObject goal in goals)
         {
-            float dist = Vector3.Distance(farthestBall.transform.position, goal.transform.position);
-            if (dist < shortestGoalDistance)
+            float distance = Vector3.Distance(fromPosition, goal.transform.position);
+            if (distance < shortestDistance)
             {
-                shortestGoalDistance = dist;
+                shortestDistance = distance;
                 nearestGoal = goal;
             }
         }
 
-        if (nearestGoal != null)
-        {
-            Rigidbody rb = farthestBall.GetComponent<Rigidbody>();
-            if (rb != null)
-            {
-                Vector3 direction = (nearestGoal.transform.position - farthestBall.transform.position).normalized;
-                rb.AddForce(direction * kickForce);
-                StartCoroutine(cameraController.FollowBall(farthestBall));
-            }
-        }
+        return nearestGoal;
     }
 
     private void OnTriggerEnter(Collider other)
